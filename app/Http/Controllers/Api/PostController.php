@@ -24,8 +24,24 @@ class PostController extends Controller {
         }
 
         $posts = Post::with('category')
-            ->when($request->filled('category'), function (Builder $query) use ($request) {
-                $query->where('category_id', $request->category);
+            ->when(request('search_category'), function (Builder $query) {
+                $query->where('category_id', request('search_category'));
+            })
+            ->when(request('search_id'), function (Builder $query) {
+                $query->where('id', request('search_id'));
+            })
+            ->when(request('search_title'), function (Builder $query) {
+                $query->where('title', 'like', '%' . request('search_title') . '%');
+            })
+            ->when(request('search_content'), function (Builder $query) {
+                $query->where('content', 'like', '%' . request('search_content') . '%');
+            })
+            ->when(request('search_global'), function (Builder $query) {
+                $query->whereAny([
+                    'id',
+                    'title',
+                    'content',
+                ], 'LIKE', '%' . request('search_global') . '%');
             })
             ->orderBy($orderColumn, $orderDirection)
             ->paginate(10);
@@ -52,5 +68,11 @@ class PostController extends Controller {
         $post->update($request->validated());
 
         return new PostResource($post);
+    }
+
+    public function destroy(Post $post) {
+        $post->delete();
+
+        return response()->noContent();
     }
 }

@@ -1,4 +1,4 @@
-import {ref} from 'vue'
+import {ref, inject} from 'vue'
 import {useRouter} from "vue-router";
 
 /*
@@ -16,6 +16,11 @@ export default function usePosts() {
     const router = useRouter();
     const validationErrors = ref({});
     const isSubmitting = ref(false); // by default the form isn't submitting
+    // The keyword inject is used to read the value from a parent
+    // component that used the provide keywords to provide this value.
+    // In this case, '$swal' is the key for the value that was provided
+    // higher in the component tree.
+    const swal = inject('$swal')
 
     const updatePost = async (id, post) => {
         if (isSubmitting.value) return;
@@ -25,7 +30,12 @@ export default function usePosts() {
 
         axios.put('/api/posts/' + id, post)
             .then(response => {
-                router.push({ name: 'posts.index' })
+                router.push({name: 'posts.index'});
+
+                swal({
+                    icon: 'success',
+                    title: 'Post updated successfully'
+                })
             })
             .catch(error => {
                 if (error.response?.data) {
@@ -58,7 +68,12 @@ export default function usePosts() {
         axios.post('/api/posts', serializedPost)
             .then(response => {
                 // redirect to route posts.index if the request is successful
-                router.push({name: 'posts.index'})
+                router.push({name: 'posts.index'});
+
+                swal({
+                    icon: 'success',
+                    title: 'Post saved successfully'
+                })
             })
             .catch(error => {
                 if (error.response?.data) {
@@ -71,12 +86,20 @@ export default function usePosts() {
     }
 
     const getPosts = async (page = 1,
-                            category = '',
+                            search_category = '',
+                            search_id = '',
+                            search_title = '',
+                            search_content = '',
+                            search_global = '',
                             order_column = 'created_at',
                             order_direction = 'desc'
     ) => {
         axios.get('/api/posts?page=' + page +
-            '&category=' + category +
+            '&search_category=' + search_category +
+            '&search_id=' + search_id +
+            '&search_title=' + search_title +
+            '&search_content=' + search_content +
+            '&search_global=' + search_global +
             '&order_column=' + order_column +
             '&order_direction=' + order_direction)
             .then(response => {
@@ -91,5 +114,38 @@ export default function usePosts() {
             })
     }
 
-    return {post, posts, getPost, getPosts, storePost, updatePost, validationErrors, isSubmitting}
+    const deletePost = async (id) => {
+        swal({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this action!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!',
+            confirmButtonColor: '#ef4444',
+            reverseButtons: true
+        })
+            .then(result => {
+                if (result.isConfirmed) {
+                    axios.delete('/api/posts/' + id)
+                        .then(response => {
+                            // since we are deleting on the index page, we need to manually
+                            // refresh the list of posts because we don't redirect if we're on the page itself
+                            getPosts();
+                            router.push({ name: 'posts.index' })
+                            swal({
+                                icon: 'success',
+                                title: 'Post deleted successfully'
+                            })
+                        })
+                        .catch(error => {
+                            swal({
+                                icon: 'error',
+                                title: 'Something went wrong'
+                            })
+                        })
+                }
+            })
+    }
+
+    return {post, posts, getPost, getPosts, storePost, updatePost, deletePost, validationErrors, isSubmitting}
 }
