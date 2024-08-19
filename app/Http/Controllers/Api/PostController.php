@@ -8,6 +8,7 @@ use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class PostController extends Controller {
     public function index(Request $request) {
@@ -50,6 +51,8 @@ class PostController extends Controller {
     }
 
     public function store(StorePostRequest $request) {
+        Gate::authorize('posts.create');
+
         if ($request->hasFile('thumbnail')) {
             $filename = $request->file('thumbnail')->getClientOriginalName();
             info($filename);
@@ -65,12 +68,16 @@ class PostController extends Controller {
     }
 
     public function update(StorePostRequest $request, Post $post) {
+        Gate::authorize('posts.update');
+
         $post->update($request->validated());
 
         return new PostResource($post);
     }
 
     public function destroy(Post $post) {
+        Gate::authorize('posts.delete');
+
         $post->delete();
 
         return response()->noContent();
