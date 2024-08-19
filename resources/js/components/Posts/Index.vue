@@ -70,6 +70,9 @@
                             </div>
                         </div>
                     </th>
+                    <th class="px-6 py-3 bg-gray-50 text-left">
+                        <span class="text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Actions</span>
+                    </th>
                 </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200 divide-solid">
@@ -85,10 +88,13 @@
                         {{ post.category }}
                     </td>
                     <td class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
-                        {{ post.content }}
+                        {{ truncate(post.content) }}
                     </td>
                     <td class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
                         {{ post.created_at }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
+                        <router-link :to="{ name: 'posts.edit', params: { id: post.id } }">Edit</router-link>
                     </td>
                 </tr>
                 </tbody>
@@ -115,6 +121,14 @@ const orderColumn = ref('created_at')
 const orderDirection = ref('desc')
 const {posts, getPosts} = usePosts();
 const {categories, getCategories} = useCategories();
+
+const truncate = (value, length = 50) => {
+    if (value.length > length) {
+        return value.substring(0, length) + "...";
+    } else {
+        return value;
+    }
+}
 
 const updateOrdering = (column) => {
     orderColumn.value = column

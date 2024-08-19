@@ -12,13 +12,32 @@ export default function usePosts() {
     // the Vue.js reactivity system will track these changes and automatically
     // update the parts of the application that rely on those data.
     const posts = ref({});
+    const post = ref({})
     const router = useRouter();
     const validationErrors = ref({});
     const isSubmitting = ref(false); // by default the form isn't submitting
 
+    const updatePost = async (post) => {
+        if (isSubmitting.value) return;
+
+        isSubmitting.value = true
+        validationErrors.value = {}
+
+        axios.put('/api/posts/' + post.id, post)
+            .then(response => {
+                router.push({ name: 'posts.index' })
+            })
+            .catch(error => {
+                if (error.response?.data) {
+                    validationErrors.value = error.response.data.errors
+                }
+            })
+            .finally(() => isSubmitting.value = false)
+    }
+
     const storePost = async (post) => {
         // if the form is already submitting, don't proceed with request
-        if(isSubmitting.value) return;
+        if (isSubmitting.value) return;
 
         // else set it to submitting
         isSubmitting.value = true;
@@ -39,19 +58,16 @@ export default function usePosts() {
         axios.post('/api/posts', serializedPost)
             .then(response => {
                 // redirect to route posts.index if the request is successful
-                router.push({ name: 'posts.index' })
-
-                // since we are redirecting, we don't need to set isSubmitting to false
+                router.push({name: 'posts.index'})
             })
             .catch(error => {
                 if (error.response?.data) {
                     validationErrors.value = error.response.data.errors
-
-                    // since we submitted the form and encountered errors, we need to set
-                    // isSubmitting to false so the user can resubmit after he faced errors
-                    isSubmitting.value = false;
                 }
             })
+            // since we submitted the form and encountered errors, we need to set
+            // isSubmitting to false so the user can resubmit after he faced errors
+            .finally(() => isSubmitting.value = false)
     }
 
     const getPosts = async (page = 1,
@@ -68,5 +84,12 @@ export default function usePosts() {
             })
     };
 
-    return {posts, getPosts, storePost, validationErrors, isSubmitting}
+    const getPost = async (id) => {
+        axios.get('/api/posts/' + id)
+            .then(response => {
+                post.value = response.data.data;
+            })
+    }
+
+    return {post, posts, getPost, getPosts, storePost, updatePost, validationErrors, isSubmitting}
 }
