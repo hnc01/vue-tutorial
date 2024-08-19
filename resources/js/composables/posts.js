@@ -26,7 +26,17 @@ export default function usePosts() {
         // reset the validation errors to empty
         validationErrors.value = {};
 
-        axios.post('/api/posts', post)
+        // to post the file, we need to make a FormData Object and pass that to
+        // an HTTP request instead of passing the post.
+        let serializedPost = new FormData()
+
+        for (let item in post) {
+            if (post.hasOwnProperty(item)) {
+                serializedPost.append(item, post[item])
+            }
+        }
+
+        axios.post('/api/posts', serializedPost)
             .then(response => {
                 // redirect to route posts.index if the request is successful
                 router.push({ name: 'posts.index' })
