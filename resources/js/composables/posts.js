@@ -17,13 +17,13 @@ export default function usePosts() {
     const validationErrors = ref({});
     const isSubmitting = ref(false); // by default the form isn't submitting
 
-    const updatePost = async (post) => {
+    const updatePost = async (id, post) => {
         if (isSubmitting.value) return;
 
         isSubmitting.value = true
         validationErrors.value = {}
 
-        axios.put('/api/posts/' + post.id, post)
+        axios.put('/api/posts/' + id, post)
             .then(response => {
                 router.push({ name: 'posts.index' })
             })
